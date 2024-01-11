@@ -6,6 +6,7 @@
     "rootDir": "src",
     "esModuleInterop": true,
     "strict": true,
+    "moduleResolution": "Node"
   },
   "exclude": [
     "**/*.spec.ts"
