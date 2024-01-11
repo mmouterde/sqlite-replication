@@ -1,5 +1,5 @@
-import ReplicationHelpers from './replicationHelpers';
-import {ReplicationCollectionOptions, ReplicationOptions, ReplicationStorage} from "./replication";
+import { ReplicationHelpers } from './replicationHelpers';
+import { ReplicationCollectionOptions, ReplicationOptions, ReplicationStorage } from './replication';
 
 function typeMock<A>(obj: Partial<A>): A {
     return obj as A;
@@ -40,7 +40,9 @@ describe('replicationHelpers', () => {
     describe('ensureFetchPush', () => {
         it('should be silent of fetchPush is provided', async () => {
             expect(() =>
-                ReplicationHelpers.ensureFetchPush(typeMock<ReplicationOptions>({ fetchPush: () => Promise.resolve() })),
+                ReplicationHelpers.ensureFetchPush(
+                    typeMock<ReplicationOptions>({ fetchPush: () => Promise.resolve() }),
+                ),
             ).not.toThrow();
         });
         it('should throw exception if no fetchPush defined', async () => {
@@ -49,15 +51,17 @@ describe('replicationHelpers', () => {
             );
         });
         it('should throw exception if no fetchPush is not a function', async () => {
-            expect(() => ReplicationHelpers.ensureFetchPush(fuckTypeMock<ReplicationOptions>({ fetchPush: 3 }))).toThrow(
-                'fetchPull in ReplicationOptions should be a function ()=>Promise',
-            );
+            expect(() =>
+                ReplicationHelpers.ensureFetchPush(fuckTypeMock<ReplicationOptions>({ fetchPush: 3 })),
+            ).toThrow('fetchPull in ReplicationOptions should be a function ()=>Promise');
         });
     });
     describe('ensureFetchPull', () => {
         it('should be silent of fetchPull is provided', async () => {
             expect(() =>
-                ReplicationHelpers.ensureFetchPull(typeMock<ReplicationOptions>({ fetchPull: () => Promise.resolve(null) })),
+                ReplicationHelpers.ensureFetchPull(
+                    typeMock<ReplicationOptions>({ fetchPull: () => Promise.resolve(null) }),
+                ),
             ).not.toThrow(Error);
         });
         it('should throw exception if no fetchPull defined', async () => {
@@ -66,9 +70,9 @@ describe('replicationHelpers', () => {
             );
         });
         it('should throw exception if no fetchPull is not a function', async () => {
-            expect(() => ReplicationHelpers.ensureFetchPull(fuckTypeMock<ReplicationOptions>({ fetchPull: 3 }))).toThrow(
-                'fetchPull in ReplicationOptions should be a function (PullConfig)=>Promise',
-            );
+            expect(() =>
+                ReplicationHelpers.ensureFetchPull(fuckTypeMock<ReplicationOptions>({ fetchPull: 3 })),
+            ).toThrow('fetchPull in ReplicationOptions should be a function (PullConfig)=>Promise');
         });
     });
     describe('ensureRequiredColumns', () => {

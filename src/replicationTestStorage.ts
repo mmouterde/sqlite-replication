@@ -1,4 +1,4 @@
-import {ReplicationState, ReplicationStorage} from "./replication";
+import { ReplicationState, ReplicationStorage } from './replication';
 
 export class ReplicationTestStorage implements ReplicationStorage {
     constructor(private replicationState: any) {}

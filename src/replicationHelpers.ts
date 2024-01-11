@@ -1,15 +1,9 @@
-import {SQLiteDBConnection} from '@capacitor-community/sqlite';
-import {
-    ReplicationCollectionOptions,
-    ReplicationConfig,
-    ReplicationOptions,
-    ReplicationStorage,
-} from './replication';
+import { SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { ReplicationCollectionOptions, ReplicationConfig, ReplicationOptions, ReplicationStorage } from './replication';
 
 const EXPECTED_COLUMNS = ['id', '_forkParent', 'updatedAt', 'deletedAt'];
 
-
-export default class ReplicationHelpers {
+export class ReplicationHelpers {
     static getDefaultCollectionOptions(
         db: SQLiteDBConnection,
         collectionName: string,
@@ -19,7 +13,9 @@ export default class ReplicationHelpers {
             name: collectionName,
             batchSize: options.batchSize || 10,
             countDocumentsUpdatedAt: async (updatedAt: number) => {
-                const results = await db.query(`SELECT count(*) FROM "${collectionName}" where "updatedAt"=${updatedAt};`);
+                const results = await db.query(
+                    `SELECT count(*) FROM "${collectionName}" where "updatedAt"=${updatedAt};`,
+                );
                 if (results && results.values && results.values.length && results.values[0]) {
                     return results?.values[0]?.count || 0;
                 } else return 0;
@@ -30,7 +26,9 @@ export default class ReplicationHelpers {
                     documents = documents.map(options.map);
                 }
                 const keys = Object.keys(documents[0]);
-                const values = documents.map((document) => `(${keys.map((key) => ReplicationHelpers.safeValue(document[key])).join()})`);
+                const values = documents.map(
+                    (document) => `(${keys.map((key) => ReplicationHelpers.safeValue(document[key])).join()})`,
+                );
                 const conflictUpdate = keys.map((key) => `"${key}"=excluded."${key}"`).join();
                 return db.execute(`INSERT INTO "${collectionName}" (${keys
                     .map((key) => `"${key}"`)
@@ -92,7 +90,7 @@ export default class ReplicationHelpers {
         db: ReplicationStorage,
         collection: ReplicationCollectionOptions,
     ): Promise<ReplicationConfig> {
-        const {cursor, offset} = await db.getReplicationState(collection.name);
-        return {cursor, limit: collection.batchSize || 20, offset};
+        const { cursor, offset } = await db.getReplicationState(collection.name);
+        return { cursor, limit: collection.batchSize || 20, offset };
     }
 }

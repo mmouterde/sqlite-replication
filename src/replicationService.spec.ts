@@ -1,6 +1,6 @@
 import { ReplicationService } from './replicationService';
 import { ReplicationTestStorage } from './replicationTestStorage';
-import {ReplicationConfig, ReplicationOptions} from './replication';
+import { ReplicationConfig, ReplicationOptions } from './replication';
 
 describe('replicationService', () => {
     describe('replicatePull one empty collection', () => {
