@@ -1,10 +1,12 @@
 {
   "name": "sqlite-replication",
-  "version": "0.0.1",
+  "version": "0.0.2b",
   "description": "A Typescript module to replicate SQLite DB with server.",
   "scripts": {
     "test": "jest"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/replication.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mmouterde/sqlite-replication.git"
