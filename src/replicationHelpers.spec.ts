@@ -9,39 +9,11 @@ function fuckTypeMock<A>(obj: any): A {
 }
 
 describe('replicationHelpers', () => {
-    describe('getPullConfig', () => {
-        it('should use storage to define offset and cursor', async () => {
-            const storage = typeMock<ReplicationStorage>({
-                getReplicationState() {
-                    return Promise.resolve({ offset: 123, cursor: 456 });
-                },
-            });
-            const collectionOption = typeMock<ReplicationCollectionOptions>({ batchSize: 789 });
-            expect(await ReplicationHelpers.getReplicationState(storage, collectionOption)).toEqual({
-                limit: 789,
-                offset: 123,
-                cursor: 456,
-            });
-        });
-        it('should use 20 as limit default if not provided by ReplicationCollectionOptions', async () => {
-            const storage = typeMock<ReplicationStorage>({
-                getReplicationState() {
-                    return Promise.resolve({ offset: 123, cursor: 456 });
-                },
-            });
-            const collectionOption = typeMock<ReplicationCollectionOptions>({});
-            expect(await ReplicationHelpers.getReplicationState(storage, collectionOption)).toEqual({
-                limit: 20,
-                offset: 123,
-                cursor: 456,
-            });
-        });
-    });
     describe('ensureFetchPush', () => {
         it('should be silent of fetchPush is provided', async () => {
             expect(() =>
                 ReplicationHelpers.ensureFetchPush(
-                    typeMock<ReplicationOptions>({ fetchPush: () => Promise.resolve() }),
+                    typeMock<ReplicationOptions>({ fetchPush: () => Promise.resolve([]) }),
                 ),
             ).not.toThrow();
         });

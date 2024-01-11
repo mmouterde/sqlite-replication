@@ -35,18 +35,19 @@ A Typescript module to replicate SQLite DB with server.
                     {
                         name: 'todos',
                         batchSize: 99,
-                        countDocumentsUpdatedAt: async (updatedAt: number) => { ... },
+                        getDocumentOffset: async (updatedAt: number,id: string) => { ... },
                         upsertAll: (documents: any[]) => { ... },
-                        deleteAll: (documents: any[]) => { ...},
+                        deleteAll: (documents: any[]) => { ... },
+                        findChanges: (state: ReplicationConfig) => { ... };
                     }
                     
                 ],
                 
                 // Define how to pull data from your own server (Rest, GraphQL... up to you)
-                fetchPull: async (pullConfig: any) => (await api.post(`${URL_BASE}replicationPull`, pullConfig)).data,
+                fetchPull: async (pullConfig: any) => (await api.post(`${URL_BASE}/replicationPull`, pullConfig)).data,
                 
                 // Define how to push data to your server
-                fetchPush: async () => (await api.post(`${URL_BASE}replicationPush`, {})).data,
+                fetchPush: async () => (await api.post(`${URL_BASE}/replicationPush`, {})).data,
             }
         );
         
@@ -60,10 +61,11 @@ A Typescript module to replicate SQLite DB with server.
 ```
 ### Client requirements
 Ensure your tables have at least these columns :
-- `id` as primary key (UUID recommended)
+- `id` as text, as primary key (UUID recommended)
 - `updateAt` as timestamp, the last document change date
 - `deletedAt` as timestamp, the deletion date (if deleted)
 - `_forkParent` as text, used for conflict handling.
+- Client should be able to store deleted documents ! Ensure no deletion, just add a `deletedAt` timestamp instead
 
 ### Server requirements
 - Ensure documents properties include : 
@@ -73,8 +75,8 @@ Ensure your tables have at least these columns :
 - note that `_forkParent` is not required in server storage and could be removed 
 - API should return deleted documents ! Ensure no deletion, just add a `deletedAt` timestamp instead
 - API should return documents in a predicable order. If you use SQL like database use `ORDER BY "updatedAt", "id"`
-- drop foreign constraints, sorry but it's not relevant in a distributed context
-- ensure `id` type and filled in a compatible way with distributed context (prefer UUID or similar)
+- You would probably have to drop foreign constraints, it's not relevant in a distributed context, specially once you have circular relations
+- ensure `id` is filled in a compatible way with distributed context (prefer UUID or similar)
 
 ### Server Example with node Express API
 
@@ -112,7 +114,7 @@ const mobilePullBodySchema = {
     },
 };
 
-app.post('/replicationPull', validate(mobilePullBodySchema), async (req: APIRequest, res) => {
+app.post('/replicationPull', validate(mobilePullBodySchema), async (req, res) => {
     const collections = {};
     
     // Query users only if required
@@ -149,7 +151,7 @@ app.post('/replicationPull', validate(mobilePullBodySchema), async (req: APIRequ
 });
 
 
-router.post('/replicationPush', validate(replicationPushSchema), async (req: APIRequest, res) => {
+router.post('/replicationPush', validate(replicationPushSchema), async (req, res) => {
     const collections = req.body.collections;
     if (collections.users) {
         await Promise.all(collections.users.map(pushUser));
@@ -160,16 +162,19 @@ router.post('/replicationPush', validate(replicationPushSchema), async (req: API
 async function pushUser(user) {
     const forkParent = user._forkParent;
     delete user._forkParent;
-    // remotely created case (insert), not that `id` is filled by client
+    
+    // remotely created case (insert), note that `id` is filled by client
     if (forkParent.updatedAt === null) {
         // insert in DB, note that `updateAt` default value is now()
         return usersService.create(user)
     }
+    
     // remotely deleted case (delete)
     else if (user.deletedAt) {
         // no deletion just flag the document with `deletedAt`=now() and `updateAt`=now() too.
         return usersService.update({...user,updateAt:Date.now()});
     }
+    
     //remotely update case
     else if (forkParent.updatedAt !== user.updatedAt) {
         const serverDocument = await usersService.getById(user.id),
@@ -178,10 +183,14 @@ async function pushUser(user) {
         if (!serverDocument || serverDocument.deletedAt) {
             return;
         }
+        
         // no conflict case
         else if (serverDocument.updatedAt === forkParent.updatedAt) {
             return usersService.update({...user,updateAt:Date.now()});
-        } else {
+        } 
+        
+        //Conflict case
+        else {
             const remoteChangedKeys = Object.keys(user).filter(
                 (key) => JSON.stringify(user[key]) !== JSON.stringify(forkParent[key]),
             );
@@ -195,7 +204,36 @@ async function pushUser(user) {
 }
 ```
 
+## Client Replication process
+A replication starts with sending local changes to the server then getting changes from the server.
+By the way, server could fix conflicts and include merged documents during the pull step.  
+- Push Data
+  - get a batch of documents where `updatedAt` > last `updateAt` pulled (+ offset), this including deleted documents. 
+  - call fetchPush() hook to push them to the server. Each document includes a `_forkParent` property with a stringify version of the last server version known, to allow to the server to know changes at the property level.
+  - loop until all documents are sent.
+- Pull Data
+  - call fetchPull() to get a batch of documents. For each collection, cursor+offset+limit are sent to paginated results.
+  - each pulled document is stringified and set as `_forkParent` property `document = {...document, _forkParent: JSON.stringify(document)}`
+  - deleted documents from the server are removed from the local DB (real deletion this time)
+  - local replication state (cursor+offset) is updated
+  - loop pull process until all `hasMoreDocument` are false.
+- `replicationService.replicationCompleted` observable trigger a new value. 
 
-
+## Hooks & Customs
+- `ReplicationOptions` define two required hooks : `fetchPush`&`fetchPull` to define your way to reach the server
+- `ReplicationHelpers.getDefaultCollectionOptions(tableName)` generaly works by feel free to provide your own `ReplicationCollectionOptions` to customize access to SQLite tables
+```typescript
+export interface ReplicationCollectionOptions {
+name: string;
+batchSize: number;
+// This hook is called to update data to SQLite
+upsertAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges>;
+// This hook is called to remove data to SQLite
+deleteAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges>;
+// This hook is called to define the document offset from `updatedAt` and `id`
+getDocumentOffset: (updatedAt: number, id: string) => Promise<number>;
+findChanges: (config: ReplicationConfig) => Promise<number>;
+}
+```
 ## Data model upgrades
 [capacitor-community/sqlite UpgradeDatabaseVersion](https://github.com/capacitor-community/sqlite/blob/master/docs/UpgradeDatabaseVersion.md) works well and is provided by SQLite itself.

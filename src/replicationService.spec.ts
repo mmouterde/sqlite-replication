@@ -1,12 +1,13 @@
 import { ReplicationService } from './replicationService';
 import { ReplicationTestStorage } from './replicationTestStorage';
-import { ReplicationConfig, ReplicationOptions } from './replication';
+import { ReplicationCollectionOptions, ReplicationConfig, ReplicationOptions, ReplicationStorage } from './replication';
+import { ReplicationHelpers } from './replicationHelpers';
 
 describe('replicationService', () => {
     describe('replicatePull one empty collection', () => {
         async function testReplication(fetchPull: (pullConfig: any) => Promise<any>) {
             // empty replication storage
-            const storage = new ReplicationTestStorage({ users: { offset: 0, cursor: 0 } });
+            const storage = new ReplicationTestStorage({ users: { offset: 0, cursor: 0 } }, null);
             //arrays to fill as proofs and make assertions
             const upserted: any[] = [];
             const deleted: any[] = [];
@@ -17,7 +18,8 @@ describe('replicationService', () => {
                     {
                         name: 'users',
                         batchSize: 10,
-                        countDocumentsUpdatedAt: () => Promise.resolve(1),
+                        getDocumentOffset: () => Promise.resolve(1),
+                        findChanges: (state: ReplicationConfig) => Promise.resolve([]),
                         upsertAll: (documents: any) => {
                             upserted.push(documents);
                             return Promise.resolve();
@@ -251,7 +253,7 @@ describe('replicationService', () => {
         // that cas mean that there is 4 documents with the same cursor, pullconfig should ask the same cursor by with an offset of 4 to skip the already known
         async function testReplication(fetchPull: any) {
             // empty replication storage
-            const storage = new ReplicationTestStorage({ users: { offset: 4, cursor: 123 } });
+            const storage = new ReplicationTestStorage({ users: { offset: 4, cursor: 123 } }, null);
             //arrays to fill as proofs and make assertions
             const upserted: any[] = [];
             const deleted: any[] = [];
@@ -262,7 +264,8 @@ describe('replicationService', () => {
                     {
                         name: 'users',
                         batchSize: 10,
-                        countDocumentsUpdatedAt: () => Promise.resolve(4),
+                        getDocumentOffset: () => Promise.resolve(4),
+                        findChanges: () => Promise.resolve([]),
                         upsertAll: (documents) => {
                             upserted.push(documents);
                             return Promise.resolve();
@@ -312,10 +315,13 @@ describe('replicationService', () => {
     describe('replicatePull two collection', () => {
         async function testReplication(fetchPull: (a: any) => Promise<any>) {
             // empty replication storage
-            const storage = new ReplicationTestStorage({
-                users: { offset: 0, cursor: 0 },
-                companies: { offset: 0, cursor: 0 },
-            });
+            const storage = new ReplicationTestStorage(
+                {
+                    users: { offset: 0, cursor: 0 },
+                    companies: { offset: 0, cursor: 0 },
+                },
+                null,
+            );
             //arrays to fill as proofs and make assertions
             const upserted: any[] = [];
             const deleted: any[] = [];
@@ -326,7 +332,8 @@ describe('replicationService', () => {
                     {
                         name: 'users',
                         batchSize: 10,
-                        countDocumentsUpdatedAt: () => Promise.resolve(1),
+                        getDocumentOffset: () => Promise.resolve(1),
+                        findChanges: () => Promise.resolve([]),
                         upsertAll: (documents: any) => {
                             upserted.push(documents);
                             return Promise.resolve();
@@ -339,7 +346,8 @@ describe('replicationService', () => {
                     {
                         name: 'companies',
                         batchSize: 10,
-                        countDocumentsUpdatedAt: () => Promise.resolve(1),
+                        getDocumentOffset: () => Promise.resolve(1),
+                        findChanges: () => Promise.resolve([]),
                         upsertAll: (documents: any) => {
                             upserted.push(documents);
                             return Promise.resolve();
@@ -485,4 +493,49 @@ describe('replicationService', () => {
             expect(deleted).toEqual([[], [], []]);
         });
     });
+
+    describe('getReplicationPullState', () => {
+        it('should use storage to define offset and cursor', async () => {
+            const storage = typeMock<ReplicationStorage>({
+                getReplicationPullState() {
+                    return Promise.resolve({ offset: 123, cursor: 456 });
+                },
+            });
+            const collectionOption = typeMock<ReplicationCollectionOptions>({ batchSize: 789 });
+
+            const replicationService = new ReplicationService(storage, {
+                collections: [],
+                fetchPull: () => Promise.resolve(),
+                fetchPush: () => Promise.resolve(),
+            });
+
+            expect(await replicationService.getReplicationPullState(collectionOption)).toEqual({
+                limit: 789,
+                offset: 123,
+                cursor: 456,
+            });
+        });
+        it('should use 20 as limit default if not provided by ReplicationCollectionOptions', async () => {
+            const storage = typeMock<ReplicationStorage>({
+                getReplicationPullState() {
+                    return Promise.resolve({ offset: 123, cursor: 456 });
+                },
+            });
+            const collectionOption = typeMock<ReplicationCollectionOptions>({});
+            const replicationService = new ReplicationService(storage, {
+                collections: [],
+                fetchPull: () => Promise.resolve(),
+                fetchPush: () => Promise.resolve(),
+            });
+            expect(await replicationService.getReplicationPullState(collectionOption)).toEqual({
+                limit: 20,
+                offset: 123,
+                cursor: 456,
+            });
+        });
+    });
 });
+
+function typeMock<A>(obj: Partial<A>): A {
+    return obj as A;
+}

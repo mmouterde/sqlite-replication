@@ -12,9 +12,17 @@ export class ReplicationHelpers {
         return {
             name: collectionName,
             batchSize: options.batchSize || 10,
-            countDocumentsUpdatedAt: async (updatedAt: number) => {
+            findChanges: async (state: ReplicationConfig) => {
                 const results = await db.query(
-                    `SELECT count(*) FROM "${collectionName}" where "updatedAt"=${updatedAt};`,
+                    `SELECT * FROM "${collectionName}" where "updatedAt">=${state.cursor} order by ("updatedAt", "id") offset ${state.offset} limit ${state.limit};`,
+                );
+                if (results && results.values) {
+                    return results?.values;
+                } else return [];
+            },
+            getDocumentOffset: async (updatedAt: number, id: string) => {
+                const results = await db.query(
+                    `SELECT count(*) FROM "${collectionName}" where "updatedAt"=${updatedAt} and id<='${id}';`,
                 );
                 if (results && results.values && results.values.length && results.values[0]) {
                     return results?.values[0]?.count || 0;
@@ -84,13 +92,5 @@ export class ReplicationHelpers {
         if (!config.fetchPush) throw Error('fetchPush is missing in ReplicationOptions');
         if (!(config.fetchPush instanceof Function))
             throw new Error('fetchPull in ReplicationOptions should be a function ()=>Promise');
-    }
-
-    static async getReplicationState(
-        db: ReplicationStorage,
-        collection: ReplicationCollectionOptions,
-    ): Promise<ReplicationConfig> {
-        const { cursor, offset } = await db.getReplicationState(collection.name);
-        return { cursor, limit: collection.batchSize || 20, offset };
     }
 }
