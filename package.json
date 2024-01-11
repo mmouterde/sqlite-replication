@@ -1,0 +1,41 @@
+{
+  "name": "sqlite-replication",
+  "version": "0.0.1",
+  "description": "A Typescript module to replicate SQLite DB with server.",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmouterde/sqlite-replication.git"
+  },
+  "keywords": [
+    "sqlite",
+    "replication",
+    "sync",
+    "capacitor",
+    "ionic",
+    "mobile",
+    "offlinefirst"
+  ],
+  "author": "mmouterde",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mmouterde/sqlite-replication/issues"
+  },
+  "homepage": "https://github.com/mmouterde/sqlite-replication#readme",
+  "dependencies": {
+    "@capacitor-community/sqlite": "^5.5.1-4",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@babel/preset-typescript": "^7.23.3",
+    "@babel/preset-env": "^7.23.8",
+    "ts-node": "^10.9.2",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  }
+}
