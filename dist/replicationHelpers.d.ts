@@ -1,6 +1,6 @@
 import { SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { ReplicationCollectionOptions, ReplicationConfig, ReplicationOptions, ReplicationStorage } from './replication';
-export default class ReplicationHelpers {
+export declare class ReplicationHelpers {
     static getDefaultCollectionOptions(db: SQLiteDBConnection, collectionName: string, options?: {
         batchSize?: number;
         map?: (document: any) => any;

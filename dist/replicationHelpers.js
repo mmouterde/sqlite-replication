@@ -1,5 +1,5 @@
 const EXPECTED_COLUMNS = ['id', '_forkParent', 'updatedAt', 'deletedAt'];
-export default class ReplicationHelpers {
+export class ReplicationHelpers {
     static getDefaultCollectionOptions(db, collectionName, options = {}) {
         return {
             name: collectionName,

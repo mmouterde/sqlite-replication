@@ -1,5 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
-import ReplicationHelpers from './replicationHelpers';
+import { ReplicationHelpers } from './replicationHelpers';
 export class ReplicationService {
     db;
     options;
