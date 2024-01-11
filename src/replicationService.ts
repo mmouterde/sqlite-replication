@@ -1,6 +1,11 @@
 import { BehaviorSubject } from 'rxjs';
-import {ensureFetchPull, ensureFetchPush, ensureRequiredColumns, getReplicationState} from './replicationHelpers';
-import {PulledCollection, ReplicationConfig, ReplicationOptions, ReplicationStorage} from './replication';
+import ReplicationHelpers from './replicationHelpers';
+import {
+    PulledCollection,
+    ReplicationConfig,
+    ReplicationOptions,
+    ReplicationStorage
+} from './replication';
 
 export class ReplicationService {
     constructor(private db: ReplicationStorage, private options: ReplicationOptions) {}
@@ -11,9 +16,9 @@ export class ReplicationService {
      * - ensure collections match tables with required columns : id, deletedAt, updatedAt, _forkParent
      */
     async init() {
-        ensureFetchPull(this.options);
-        ensureFetchPush(this.options);
-        await ensureRequiredColumns(this.db, this.options.collections);
+        ReplicationHelpers.ensureFetchPull(this.options);
+        ReplicationHelpers.ensureFetchPush(this.options);
+        await ReplicationHelpers.ensureRequiredColumns(this.db, this.options.collections);
         await this.db.createReplicationStatesTable();
     }
     /**
@@ -27,17 +32,17 @@ export class ReplicationService {
     async push() {
         const pullConfig = new Map<string, ReplicationConfig>();
         for (const collection of this.options.collections) {
-            pullConfig.set(collection.name, await getReplicationState(this.db, collection));
+            pullConfig.set(collection.name, await ReplicationHelpers.getReplicationState(this.db,collection));
         }
         let shouldIterate = false;
         do {
-            shouldIterate = await this.pushIteration(pullConfig);
+            //shouldIterate = await this.pushIteration(pullConfig);
         } while (shouldIterate);
     }
     async pull() {
         const pullConfig = new Map<string, ReplicationConfig>();
         for (const collection of this.options.collections) {
-            pullConfig.set(collection.name, await getReplicationState(this.db, collection));
+            pullConfig.set(collection.name, await ReplicationHelpers.getReplicationState(this.db, collection));
         }
         let shouldIterate = false;
         do {

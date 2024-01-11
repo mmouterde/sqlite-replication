@@ -255,7 +255,7 @@ describe('replicationService', () => {
             //arrays to fill as proofs and make assertions
             const upserted: any[] = [];
             const deleted: any[] = [];
-            const pullConfigs: PullConfig[] = [];
+            const pullConfigs: ReplicationConfig[] = [];
 
             const config: ReplicationOptions = {
                 collections: [
@@ -319,7 +319,7 @@ describe('replicationService', () => {
             //arrays to fill as proofs and make assertions
             const upserted: any[] = [];
             const deleted: any[] = [];
-            const pullConfigs: PullConfig[] = [];
+            const pullConfigs: ReplicationConfig[] = [];
 
             const config = {
                 collections: [

@@ -30,7 +30,7 @@ A Typescript module to replicate SQLite DB with server.
                 // Provide collections descriptor to replicate
                 collections: [
                     // use a default helper
-                    getDefaultCollectionOptions(db, 'users'),
+                    ReplicationHelpers.getDefaultCollectionOptions(db, 'users'),
                     // or define your own config
                     {
                         name: 'todos',
