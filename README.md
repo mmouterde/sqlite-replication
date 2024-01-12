@@ -205,10 +205,10 @@ async function pushUser(user) {
 ```
 
 ## Client Replication process
-A replication starts with sending local changes to the server then getting changes from the server.
+A replication starts by sending local changes to the server then getting changes from the server.
 By the way, server could fix conflicts and include merged documents during the pull step.  
 - Push Data
-  - get a batch of documents where `updatedAt` > last `updateAt` pulled (+ offset), this including deleted documents. 
+  - get a batch of documents where `updatedAt` >= last `updateAt` pulled (+ offset), this including deleted documents. 
   - call fetchPush() hook to push them to the server. Each document includes a `_forkParent` property with a stringify version of the last server version known, to allow to the server to know changes at the property level.
   - loop until all documents are sent.
 - Pull Data
@@ -220,7 +220,7 @@ By the way, server could fix conflicts and include merged documents during the p
 - `replicationService.replicationCompleted` observable trigger a new value. 
 
 ## Hooks & Customs
-- `ReplicationOptions` define two required hooks : `fetchPush`&`fetchPull` to define your way to reach the server
+- `ReplicationOptions` interface defines two required hooks : `fetchPush`&`fetchPull` to define your way to reach the server
 - `ReplicationHelpers.getDefaultCollectionOptions(tableName)` generaly works by feel free to provide your own `ReplicationCollectionOptions` to customize access to SQLite tables
 ```typescript
 export interface ReplicationCollectionOptions {
