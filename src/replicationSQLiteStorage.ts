@@ -1,8 +1,8 @@
 import { SQLiteDBConnection } from '@capacitor-community/sqlite';
-import { ReplicationState, ReplicationStorage } from './replication';
+import { ReplicationState, ReplicationStorage, SQLiteConnection } from './replication';
 
 export class ReplicationSQLiteStorage implements ReplicationStorage {
-    constructor(private db: SQLiteDBConnection) {}
+    constructor(private db: SQLiteDBConnection | SQLiteConnection) {}
 
     async getDefinedColumns(collectionName: string) {
         return (

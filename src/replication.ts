@@ -11,8 +11,8 @@ export interface ReplicationStorage {
 export interface ReplicationCollectionOptions {
     name: string;
     batchSize: number;
-    upsertAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges>;
-    deleteAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges>;
+    upsertAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges> | Promise<Changes>;
+    deleteAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges> | Promise<Changes>;
     findChanges: (state: ReplicationConfig) => Promise<any[]>;
     getDocumentOffset: (updatedAt: number, id: string) => Promise<number>;
 }
@@ -41,4 +41,14 @@ export interface PulledDocument {
     deletedAt: number;
     updatedAt: number;
     id: string;
+}
+export interface SQLiteConnection {
+    query(statements: string): Promise<{ values?: any[] }>;
+    execute(statements: string, transaction?: boolean, isSQL92?: boolean): Promise<Changes>;
+}
+
+export interface Changes {
+    changes?: number;
+    lastId?: number;
+    values?: any[];
 }
