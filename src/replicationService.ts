@@ -104,11 +104,13 @@ export class ReplicationService {
         const changedDocumentByCollectionName = new Map<string, any>();
         const updatesPushStates = [];
         let requireAnotherBatch = false;
+        let hasData = false;
         for (const collection of this.options.collections) {
             const replicationState = replicationStatesByCollectionName.get(collection.name);
             if (replicationState) {
                 const documents = await collection.findChanges(replicationState);
                 if (documents && documents.length) {
+                    hasData = true;
                     requireAnotherBatch = replicationState.limit > 0 && documents.length === replicationState.limit;
                     changedDocumentByCollectionName.set(collection.name, documents);
                     const lastDocument = documents[documents.length - 1];
@@ -122,9 +124,13 @@ export class ReplicationService {
                 }
             }
         }
-        await this.options.fetchPush({ collections: Object.fromEntries(changedDocumentByCollectionName.entries()) });
-        // if fetchPush succeed, updatePushStates in DB.
-        await Promise.all(updatesPushStates.map((fn) => fn()));
+        if (hasData) {
+            await this.options.fetchPush({
+                collections: Object.fromEntries(changedDocumentByCollectionName.entries()),
+            });
+            // if fetchPush succeed, updatePushStates in DB.
+            await Promise.all(updatesPushStates.map((fn) => fn()));
+        }
         return requireAnotherBatch;
     }
 

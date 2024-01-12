@@ -4,6 +4,16 @@ export class ReplicationTestStorage implements ReplicationStorage {
     constructor(
         private replicationPullState: any,
         private replicationPushState: any,
+        private updateReplicationPushStateFn: (
+            collectionName: string,
+            offset: number,
+            cursor: number,
+        ) => Promise<any> = () => Promise.resolve(),
+        private updateReplicationPullStateFn: (
+            collectionName: string,
+            offset: number,
+            cursor: number,
+        ) => Promise<any> = () => Promise.resolve(),
     ) {}
 
     async getDefinedColumns(collectionName: string) {
@@ -19,9 +29,13 @@ export class ReplicationTestStorage implements ReplicationStorage {
         return Promise.resolve();
     }
     updateReplicationPushState(collectionName: string, offset: number, cursor: number): Promise<any> {
-        return Promise.resolve();
+        return this.updateReplicationPushStateFn
+            ? this.updateReplicationPushStateFn(collectionName, offset, cursor)
+            : Promise.resolve();
     }
     updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<any> {
-        return Promise.resolve();
+        return this.updateReplicationPullStateFn
+            ? this.updateReplicationPullStateFn(collectionName, offset, cursor)
+            : Promise.resolve();
     }
 }
