@@ -1,6 +1,6 @@
 {
   "name": "sqlite-replication",
-  "version": "0.0.12b",
+  "version": "0.0.13b",
   "description": "A Typescript module to replicate SQLite DB with server.",
   "scripts": {
     "test": "jest"
