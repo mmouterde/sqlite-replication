@@ -47,11 +47,11 @@ export class ReplicationSQLiteStorage {
         return this.db.isTransactionActive();
     }
     updateReplicationPushState(collectionName, offset, cursor) {
-        return this.db.execute(`INSERT INTO _replicationStates (id, pushOffset, pushCursor) VALUES (${collectionName}, ${offset}, ${cursor})
+        return this.db.execute(`INSERT INTO _replicationStates (id, pushOffset, pushCursor) VALUES ('${collectionName}', ${offset}, ${cursor})
              ON CONFLICT DO UPDATE SET pushOffset=excluded.pushOffset, pushCursor=excluded.pushCursor`, false);
     }
     updateReplicationPullState(collectionName, offset, cursor) {
-        return this.db.execute(`INSERT INTO _replicationStates (id, pullOffset, pullCursor) VALUES (${collectionName}, ${offset}, ${cursor})
+        return this.db.execute(`INSERT INTO _replicationStates (id, pullOffset, pullCursor) VALUES ('${collectionName}', ${offset}, ${cursor})
              ON CONFLICT DO UPDATE SET pullOffset=excluded.pullOffset, pullCursor=excluded.pullCursor`, false);
     }
 }

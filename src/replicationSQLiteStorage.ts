@@ -51,14 +51,14 @@ export class ReplicationSQLiteStorage implements ReplicationStorage {
     }
     updateReplicationPushState(collectionName: string, offset: number, cursor: number): Promise<any> {
         return this.db.execute(
-            `INSERT INTO _replicationStates (id, pushOffset, pushCursor) VALUES (${collectionName}, ${offset}, ${cursor})
+            `INSERT INTO _replicationStates (id, pushOffset, pushCursor) VALUES ('${collectionName}', ${offset}, ${cursor})
              ON CONFLICT DO UPDATE SET pushOffset=excluded.pushOffset, pushCursor=excluded.pushCursor`,
             false,
         );
     }
     updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<any> {
         return this.db.execute(
-            `INSERT INTO _replicationStates (id, pullOffset, pullCursor) VALUES (${collectionName}, ${offset}, ${cursor})
+            `INSERT INTO _replicationStates (id, pullOffset, pullCursor) VALUES ('${collectionName}', ${offset}, ${cursor})
              ON CONFLICT DO UPDATE SET pullOffset=excluded.pullOffset, pullCursor=excluded.pullCursor`,
             false,
         );
