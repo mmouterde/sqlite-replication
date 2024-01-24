@@ -48,7 +48,7 @@ export class ReplicationTestStorage implements ReplicationStorage {
     }
 
     isTransactionActive() {
-        return Promise.resolve();
+        return Promise.resolve({ result: false });
     }
 
     rollbackTransaction() {

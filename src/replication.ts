@@ -1,4 +1,5 @@
 import { capSQLiteChanges } from '@capacitor-community/sqlite';
+import { capSQLiteResult } from '@capacitor-community/sqlite/dist/esm/definitions';
 
 export interface ReplicationStorage {
     createReplicationStatesTable(): Promise<any>;
@@ -10,7 +11,7 @@ export interface ReplicationStorage {
     beginTransaction(): Promise<any>;
     commitTransaction(): Promise<any>;
     rollbackTransaction(): Promise<any>;
-    isTransactionActive(): Promise<any>;
+    isTransactionActive(): Promise<{ result: boolean }> | Promise<capSQLiteResult>;
 }
 export interface ReplicationCollectionOptions {
     name: string;
@@ -52,7 +53,7 @@ export interface SQLiteConnection {
     beginTransaction(): Promise<Changes>;
     commitTransaction(): Promise<Changes>;
     rollbackTransaction(): Promise<Changes>;
-    isTransactionActive(): Promise<Changes>;
+    isTransactionActive(): Promise<{ result: boolean }> | Promise<capSQLiteResult>;
 }
 
 export interface Changes {

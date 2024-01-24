@@ -102,7 +102,9 @@ export class ReplicationService {
             }
             await this.db.commitTransaction();
         } catch (e) {
-            await this.db.rollbackTransaction();
+            if ((await this.db.isTransactionActive()).result) {
+                await this.db.rollbackTransaction();
+            }
             throw e;
         }
         return requireAnotherBatch;
@@ -146,7 +148,9 @@ export class ReplicationService {
             }
             await this.db.commitTransaction();
         } catch (e) {
-            await this.db.rollbackTransaction();
+            if ((await this.db.isTransactionActive()).result) {
+                await this.db.rollbackTransaction();
+            }
             throw e;
         }
         return requireAnotherBatch;
