@@ -141,10 +141,7 @@ export class ReplicationService {
                     collections: Object.fromEntries(changedDocumentByCollectionName.entries()),
                 });
                 // if fetchPush succeed, updatePushStates in DB.
-                await updatesPushStates.reduce<Promise<ReplicationState | null>>(
-                    (p, fn) => p.then(fn),
-                    Promise.resolve(null),
-                );
+                await Promise.all(updatesPushStates.map((fn) => fn()));
             }
             await this.db.commitTransaction();
         } catch (e) {
