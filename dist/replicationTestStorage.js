@@ -38,7 +38,7 @@ export class ReplicationTestStorage {
         return Promise.resolve();
     }
     isTransactionActive() {
-        return Promise.resolve();
+        return Promise.resolve({ result: false });
     }
     rollbackTransaction() {
         return Promise.resolve();

@@ -13,6 +13,8 @@ export declare class ReplicationTestStorage implements ReplicationStorage {
     updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<any>;
     beginTransaction(): Promise<void>;
     commitTransaction(): Promise<void>;
-    isTransactionActive(): Promise<void>;
+    isTransactionActive(): Promise<{
+        result: boolean;
+    }>;
     rollbackTransaction(): Promise<void>;
 }

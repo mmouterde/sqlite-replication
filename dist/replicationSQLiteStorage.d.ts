@@ -10,7 +10,7 @@ export declare class ReplicationSQLiteStorage implements ReplicationStorage {
     beginTransaction(): Promise<import("@capacitor-community/sqlite").capSQLiteChanges> | Promise<import("./replication").Changes>;
     commitTransaction(): Promise<import("@capacitor-community/sqlite").capSQLiteChanges> | Promise<import("./replication").Changes>;
     rollbackTransaction(): Promise<import("@capacitor-community/sqlite").capSQLiteChanges> | Promise<import("./replication").Changes>;
-    isTransactionActive(): Promise<import("@capacitor-community/sqlite").capSQLiteResult> | Promise<import("./replication").Changes>;
+    isTransactionActive(): Promise<import("@capacitor-community/sqlite").capSQLiteResult>;
     updateReplicationPushState(collectionName: string, offset: number, cursor: number): Promise<any>;
     updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<any>;
 }
