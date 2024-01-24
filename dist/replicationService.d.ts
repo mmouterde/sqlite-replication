@@ -1,5 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
-import { ReplicationConfig, ReplicationOptions, ReplicationStorage } from './replication';
+import { ReplicationCollectionOptions, ReplicationConfig, ReplicationOptions, ReplicationStorage } from './replication';
 export declare class ReplicationService {
     private db;
     private options;
@@ -18,5 +18,8 @@ export declare class ReplicationService {
     replicate(): Promise<void>;
     push(): Promise<void>;
     pull(): Promise<void>;
-    pullIteration(pullConfig: Map<string, ReplicationConfig>): Promise<boolean>;
+    pullIteration(replicationStatesByCollectionName: Map<string, ReplicationConfig>): Promise<boolean>;
+    pushIteration(replicationStatesByCollectionName: Map<string, ReplicationConfig>): Promise<boolean>;
+    getReplicationPushState(collection: ReplicationCollectionOptions): Promise<ReplicationConfig>;
+    getReplicationPullState(collection: ReplicationCollectionOptions): Promise<ReplicationConfig>;
 }

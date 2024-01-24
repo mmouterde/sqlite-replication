@@ -27,57 +27,100 @@ export class ReplicationService {
         this.replicationCompleted.next({ success: true });
     }
     async push() {
-        const pullConfig = new Map();
+        const replicationStatesByCollectionName = new Map();
         for (const collection of this.options.collections) {
-            pullConfig.set(collection.name, await ReplicationHelpers.getReplicationState(this.db, collection));
+            replicationStatesByCollectionName.set(collection.name, await this.getReplicationPushState(collection));
         }
         let shouldIterate = false;
         do {
-            //shouldIterate = await this.pushIteration(pullConfig);
+            shouldIterate = await this.pushIteration(replicationStatesByCollectionName);
         } while (shouldIterate);
     }
     async pull() {
-        const pullConfig = new Map();
+        const replicationStatesByCollectionName = new Map();
         for (const collection of this.options.collections) {
-            pullConfig.set(collection.name, await ReplicationHelpers.getReplicationState(this.db, collection));
+            replicationStatesByCollectionName.set(collection.name, await this.getReplicationPullState(collection));
         }
         let shouldIterate = false;
         do {
-            shouldIterate = await this.pullIteration(pullConfig);
+            shouldIterate = await this.pullIteration(replicationStatesByCollectionName);
         } while (shouldIterate);
     }
-    async pullIteration(pullConfig) {
-        const response = await this.options.fetchPull({ collections: Object.fromEntries(pullConfig.entries()) });
+    async pullIteration(replicationStatesByCollectionName) {
+        const response = await this.options.fetchPull({
+            collections: Object.fromEntries(replicationStatesByCollectionName.entries()),
+        });
         let requireAnotherBatch = false;
         for (const collection of this.options.collections) {
             const pullResult = response.collections[collection.name];
             if (pullResult) {
-                await collection.upsertAll(pullResult.documents
+                const documents = pullResult.documents;
+                await collection.upsertAll(documents
                     .filter((document) => !document.deletedAt)
                     .map((document) => ({
                     ...document,
                     _forkParent: JSON.stringify(document),
                 })));
-                await collection.deleteAll(pullResult.documents.filter((document) => document.deletedAt));
-                if (pullResult.documents.length) {
-                    const newCursor = pullResult.documents[pullResult.documents.length - 1].updatedAt;
-                    const newOffset = await collection.countDocumentsUpdatedAt(newCursor);
-                    await this.db.updateReplicationState(collection.name, newOffset, newCursor);
-                    const collectionPullConfig = pullConfig.get(collection.name);
+                await collection.deleteAll(documents.filter((document) => document.deletedAt));
+                if (documents.length) {
+                    const lastDocument = documents[documents.length - 1];
+                    const newCursor = lastDocument.updatedAt;
+                    const newOffset = await collection.getDocumentOffset(newCursor, lastDocument.id);
+                    await this.db.updateReplicationPullState(collection.name, newOffset, newCursor);
+                    const collectionPullConfig = replicationStatesByCollectionName.get(collection.name);
                     if (collectionPullConfig && pullResult.hasMoreChanges) {
                         requireAnotherBatch = true;
                         collectionPullConfig.cursor = newCursor;
                         collectionPullConfig.offset = newOffset;
                     }
                     else {
-                        pullConfig.delete(collection.name);
+                        replicationStatesByCollectionName.delete(collection.name);
                     }
                 }
                 else {
-                    pullConfig.delete(collection.name);
+                    replicationStatesByCollectionName.delete(collection.name);
                 }
             }
         }
         return requireAnotherBatch;
+    }
+    async pushIteration(replicationStatesByCollectionName) {
+        const changedDocumentByCollectionName = new Map();
+        const updatesPushStates = [];
+        let requireAnotherBatch = false;
+        let hasData = false;
+        for (const collection of this.options.collections) {
+            const replicationState = replicationStatesByCollectionName.get(collection.name);
+            if (replicationState) {
+                const documents = await collection.findChanges(replicationState);
+                if (documents && documents.length) {
+                    hasData = true;
+                    requireAnotherBatch = replicationState.limit > 0 && documents.length === replicationState.limit;
+                    changedDocumentByCollectionName.set(collection.name, documents);
+                    const lastDocument = documents[documents.length - 1];
+                    const newCursor = lastDocument.updatedAt;
+                    const newOffset = await collection.getDocumentOffset(newCursor, lastDocument.id);
+                    replicationState.cursor = newCursor;
+                    replicationState.offset = newOffset;
+                    updatesPushStates.push(() => this.db.updateReplicationPushState(collection.name, newOffset, newCursor));
+                }
+            }
+        }
+        if (hasData) {
+            await this.options.fetchPush({
+                collections: Object.fromEntries(changedDocumentByCollectionName.entries()),
+            });
+            // if fetchPush succeed, updatePushStates in DB.
+            await Promise.all(updatesPushStates.map((fn) => fn()));
+        }
+        return requireAnotherBatch;
+    }
+    async getReplicationPushState(collection) {
+        const { cursor, offset } = await this.db.getReplicationPushState(collection.name);
+        return { cursor, limit: collection.batchSize || 20, offset };
+    }
+    async getReplicationPullState(collection) {
+        const { cursor, offset } = await this.db.getReplicationPullState(collection.name);
+        return { cursor, limit: collection.batchSize || 20, offset };
     }
 }

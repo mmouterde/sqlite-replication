@@ -2,20 +2,23 @@ import { capSQLiteChanges } from '@capacitor-community/sqlite';
 export interface ReplicationStorage {
     createReplicationStatesTable(): Promise<any>;
     getDefinedColumns(collectionName: string): Promise<string[] | null>;
-    getReplicationState(collectionName: string): Promise<ReplicationState>;
-    updateReplicationState(collectionName: string, offset: number, cursor: number): Promise<ReplicationState>;
+    getReplicationPushState(collectionName: string): Promise<ReplicationState>;
+    getReplicationPullState(collectionName: string): Promise<ReplicationState>;
+    updateReplicationPushState(collectionName: string, offset: number, cursor: number): Promise<ReplicationState>;
+    updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<ReplicationState>;
 }
 export interface ReplicationCollectionOptions {
     name: string;
     batchSize: number;
-    upsertAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges>;
-    deleteAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges>;
-    countDocumentsUpdatedAt: (updatedAt: number) => Promise<number>;
+    upsertAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges> | Promise<Changes>;
+    deleteAll: (documents: any[]) => Promise<void> | Promise<capSQLiteChanges> | Promise<Changes>;
+    findChanges: (state: ReplicationConfig) => Promise<any[]>;
+    getDocumentOffset: (updatedAt: number, id: string) => Promise<number>;
 }
 export interface ReplicationOptions {
     collections: ReplicationCollectionOptions[];
     fetchPull: (pullConfigs: any) => Promise<any>;
-    fetchPush: () => Promise<any>;
+    fetchPush: (documentsByCollectionName: any) => Promise<any>;
 }
 export interface ReplicationState {
     offset: number;
@@ -37,4 +40,15 @@ export interface PulledDocument {
     deletedAt: number;
     updatedAt: number;
     id: string;
+}
+export interface SQLiteConnection {
+    query(statements: string): Promise<{
+        values?: any[];
+    }>;
+    execute(statements: string, transaction?: boolean, isSQL92?: boolean): Promise<Changes>;
+}
+export interface Changes {
+    changes?: number;
+    lastId?: number;
+    values?: any[];
 }

@@ -1,9 +1,14 @@
 import { ReplicationState, ReplicationStorage } from './replication';
 export declare class ReplicationTestStorage implements ReplicationStorage {
-    private replicationState;
-    constructor(replicationState: any);
+    private replicationPullState;
+    private replicationPushState;
+    private updateReplicationPushStateFn;
+    private updateReplicationPullStateFn;
+    constructor(replicationPullState: any, replicationPushState: any, updateReplicationPushStateFn?: (collectionName: string, offset: number, cursor: number) => Promise<any>, updateReplicationPullStateFn?: (collectionName: string, offset: number, cursor: number) => Promise<any>);
     getDefinedColumns(collectionName: string): Promise<null>;
-    getReplicationState(collectionName: string): Promise<ReplicationState>;
+    getReplicationPullState(collectionName: string): Promise<ReplicationState>;
+    getReplicationPushState(collectionName: string): Promise<ReplicationState>;
     createReplicationStatesTable(): Promise<void>;
-    updateReplicationState(collectionName: string, offset: number, cursor: number): Promise<any>;
+    updateReplicationPushState(collectionName: string, offset: number, cursor: number): Promise<any>;
+    updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<any>;
 }

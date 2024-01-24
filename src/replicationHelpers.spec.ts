@@ -94,5 +94,19 @@ describe('replicationHelpers', () => {
         it('should convert boolean to 0/1', async () => {
             expect(ReplicationHelpers.safeValue(false)).toEqual('0');
         });
+        it('should stringify object', async () => {
+            expect(ReplicationHelpers.safeValue({ id: 1, toto: 2 })).toEqual(`'{"id":1,"toto":2}'`);
+        });
+        it("should stringify object with '", async () => {
+            expect(ReplicationHelpers.safeValue({ id: 1, toto: "coucou o'bryan" })).toEqual(
+                `'{"id":1,"toto":"coucou o''bryan"}'`,
+            );
+        });
+        it('should stringify array', async () => {
+            expect(ReplicationHelpers.safeValue([1, 2, 3])).toEqual(`'[1,2,3]'`);
+        });
+        it("should stringify array with '", async () => {
+            expect(ReplicationHelpers.safeValue(["o'connor", { id: 5 }, 3])).toEqual(`'["o''connor",{"id":5},3]'`);
+        });
     });
 });

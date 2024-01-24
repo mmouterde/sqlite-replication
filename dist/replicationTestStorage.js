@@ -1,18 +1,34 @@
 export class ReplicationTestStorage {
-    replicationState;
-    constructor(replicationState) {
-        this.replicationState = replicationState;
+    replicationPullState;
+    replicationPushState;
+    updateReplicationPushStateFn;
+    updateReplicationPullStateFn;
+    constructor(replicationPullState, replicationPushState, updateReplicationPushStateFn = () => Promise.resolve(), updateReplicationPullStateFn = () => Promise.resolve()) {
+        this.replicationPullState = replicationPullState;
+        this.replicationPushState = replicationPushState;
+        this.updateReplicationPushStateFn = updateReplicationPushStateFn;
+        this.updateReplicationPullStateFn = updateReplicationPullStateFn;
     }
     async getDefinedColumns(collectionName) {
         return Promise.resolve(null);
     }
-    async getReplicationState(collectionName) {
-        return this.replicationState[collectionName];
+    async getReplicationPullState(collectionName) {
+        return this.replicationPullState[collectionName];
+    }
+    async getReplicationPushState(collectionName) {
+        return this.replicationPushState[collectionName];
     }
     createReplicationStatesTable() {
         return Promise.resolve();
     }
-    updateReplicationState(collectionName, offset, cursor) {
-        return Promise.resolve();
+    updateReplicationPushState(collectionName, offset, cursor) {
+        return this.updateReplicationPushStateFn
+            ? this.updateReplicationPushStateFn(collectionName, offset, cursor)
+            : Promise.resolve();
+    }
+    updateReplicationPullState(collectionName, offset, cursor) {
+        return this.updateReplicationPullStateFn
+            ? this.updateReplicationPullStateFn(collectionName, offset, cursor)
+            : Promise.resolve();
     }
 }

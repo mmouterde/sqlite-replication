@@ -57,12 +57,14 @@ export class ReplicationHelpers {
     static safeValue(value: any) {
         if (value === null) {
             return 'NULL';
+        } else if (value.toISOString) {
+            return value.getTime();
+        } else if (Array.isArray(value) || typeof value === 'object') {
+            return `'${JSON.stringify(value).replaceAll("'", "''")}'`;
         } else if (typeof value === 'string') {
             return `'${(value as string).replaceAll("'", "''")}'`;
         } else if (typeof value === 'boolean') {
             return value ? '1' : '0';
-        } else if (value.toISOString) {
-            return value.getTime();
         } else {
             return value.toString();
         }
