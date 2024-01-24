@@ -3,7 +3,7 @@ export class ReplicationHelpers {
     static getDefaultCollectionOptions(db, collectionName, options = {}) {
         return {
             name: collectionName,
-            batchSize: options.batchSize || 10,
+            batchSize: options.batchSize || 100,
             findChanges: async (state) => {
                 const results = await db.query(`SELECT * FROM "${collectionName}" where "updatedAt">=${state.cursor} order by "updatedAt", "id" limit ${state.limit} offset ${state.offset};`);
                 if (results && results.values) {
