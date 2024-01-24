@@ -38,10 +38,11 @@ export class ReplicationHelpers {
                     (document) => `(${keys.map((key) => ReplicationHelpers.safeValue(document[key])).join()})`,
                 );
                 const conflictUpdate = keys.map((key) => `"${key}"=excluded."${key}"`).join();
-                return db.execute(`INSERT INTO "${collectionName}" (${keys
-                    .map((key) => `"${key}"`)
-                    .join()}) values ${values.join()}
-            ON CONFLICT DO UPDATE SET ${conflictUpdate}`);
+                return db.execute(
+                    `INSERT INTO "${collectionName}" (${keys.map((key) => `"${key}"`).join()}) values ${values.join()}
+            ON CONFLICT DO UPDATE SET ${conflictUpdate}`,
+                    false,
+                );
             },
             deleteAll: (documents: any[]) => {
                 if (!documents.length) return Promise.resolve();
@@ -49,6 +50,7 @@ export class ReplicationHelpers {
                     `UPDATE  "${collectionName}" SET  "deletedAt"=unixepoch(), "updatedAt"=unixepoch() WHERE id IN (${documents
                         .map((document) => ReplicationHelpers.safeValue(document.id))
                         .join()});`,
+                    false,
                 );
             },
         };

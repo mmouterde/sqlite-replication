@@ -52,11 +52,13 @@ export class ReplicationSQLiteStorage implements ReplicationStorage {
     updateReplicationPushState(collectionName: string, offset: number, cursor: number): Promise<any> {
         return this.db.execute(
             `UPDATE _replicationStates set "pushOffset"=${offset},"pushCursor"=${cursor} where id="${collectionName}"`,
+            false,
         );
     }
     updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<any> {
         return this.db.execute(
             `UPDATE _replicationStates set "pullOffset"=${offset},"pullCursor"=${cursor} where id="${collectionName}"`,
+            false,
         );
     }
 }
