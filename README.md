@@ -94,7 +94,7 @@ const mobilePullBodySchema = {
                     type: 'object',
                     properties: {
                         // The cursor (the last already pulled document updatedAt property, as integer)
-                        cursor: { type: 'number', format: 'int64' },
+                        cursor: { type: 'number' },
                         // The number of documents to pull
                         limit: { type: 'number', format: 'int64' },
                         /*
@@ -123,14 +123,14 @@ app.post('/replicationPull', validate(mobilePullBodySchema), async (req, res) =>
         const users = await database.select(
                 'id',
                 'name',
-                'updatedAt',
+                 database.knex.raw('EXTRACT(EPOCH FROM "updatedAt") as "updatedAt"'),
                 'deletedAt',
             )
             .from('users')
             // pay attention to predictability for paginating
             .orderBy(['updatedAt', 'id'])
             // get only changed users since the last updateAt value (>=)
-            .where(database.knex.raw(`date_trunc('milliseconds',"updatedAt")`), '>=', cursor)
+            .where(database.knex.raw(`date_trunc('milliseconds',"updatedAt")`), '>=', database.knex.raw(`to_timestamp(${cursor})`)`))
             // get the page data +1 to know if there is one more page next in a single sql query
             .limit(limit + 1)
             // skip the N first document with asked updateAt
