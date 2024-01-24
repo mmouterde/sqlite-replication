@@ -47,9 +47,9 @@ export class ReplicationSQLiteStorage {
         return this.db.isTransactionActive();
     }
     updateReplicationPushState(collectionName, offset, cursor) {
-        return this.db.execute(`UPDATE _replicationStates set "pushOffset"=${offset},"pushCursor"=${cursor} where id="${collectionName}"`);
+        return this.db.execute(`UPDATE _replicationStates set "pushOffset"=${offset},"pushCursor"=${cursor} where id="${collectionName}"`, false);
     }
     updateReplicationPullState(collectionName, offset, cursor) {
-        return this.db.execute(`UPDATE _replicationStates set "pullOffset"=${offset},"pullCursor"=${cursor} where id="${collectionName}"`);
+        return this.db.execute(`UPDATE _replicationStates set "pullOffset"=${offset},"pullCursor"=${cursor} where id="${collectionName}"`, false);
     }
 }
