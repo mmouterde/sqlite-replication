@@ -7,6 +7,10 @@ export interface ReplicationStorage {
     getReplicationPullState(collectionName: string): Promise<ReplicationState>;
     updateReplicationPushState(collectionName: string, offset: number, cursor: number): Promise<ReplicationState>;
     updateReplicationPullState(collectionName: string, offset: number, cursor: number): Promise<ReplicationState>;
+    beginTransaction(): Promise<any>;
+    commitTransaction(): Promise<any>;
+    rollbackTransaction(): Promise<any>;
+    isTransactionActive(): Promise<any>;
 }
 export interface ReplicationCollectionOptions {
     name: string;
@@ -45,6 +49,10 @@ export interface PulledDocument {
 export interface SQLiteConnection {
     query(statements: string): Promise<{ values?: any[] }>;
     execute(statements: string, transaction?: boolean, isSQL92?: boolean): Promise<Changes>;
+    beginTransaction(): Promise<Changes>;
+    commitTransaction(): Promise<Changes>;
+    rollbackTransaction(): Promise<Changes>;
+    isTransactionActive(): Promise<Changes>;
 }
 
 export interface Changes {

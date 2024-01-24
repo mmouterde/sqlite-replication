@@ -38,4 +38,20 @@ export class ReplicationTestStorage implements ReplicationStorage {
             ? this.updateReplicationPullStateFn(collectionName, offset, cursor)
             : Promise.resolve();
     }
+
+    beginTransaction() {
+        return Promise.resolve();
+    }
+
+    commitTransaction() {
+        return Promise.resolve();
+    }
+
+    isTransactionActive() {
+        return Promise.resolve();
+    }
+
+    rollbackTransaction() {
+        return Promise.resolve();
+    }
 }

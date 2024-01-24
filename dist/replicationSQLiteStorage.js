@@ -34,6 +34,18 @@ export class ReplicationSQLiteStorage {
       pullOffset INTEGER DEFAULT 0
     );`);
     }
+    beginTransaction() {
+        return this.db.beginTransaction();
+    }
+    commitTransaction() {
+        return this.db.commitTransaction();
+    }
+    rollbackTransaction() {
+        return this.db.rollbackTransaction();
+    }
+    isTransactionActive() {
+        return this.db.isTransactionActive();
+    }
     updateReplicationPushState(collectionName, offset, cursor) {
         return this.db.execute(`UPDATE _replicationStates set "pushOffset"=${offset},"pushCursor"=${cursor} where id="${collectionName}"`);
     }

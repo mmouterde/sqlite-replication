@@ -51,36 +51,44 @@ export class ReplicationService {
             collections: Object.fromEntries(replicationStatesByCollectionName.entries()),
         });
         let requireAnotherBatch = false;
-        for (const collection of this.options.collections) {
-            const pullResult = response.collections[collection.name];
-            if (pullResult) {
-                const documents = pullResult.documents;
-                await collection.upsertAll(documents
-                    .filter((document) => !document.deletedAt)
-                    .map((document) => ({
-                    ...document,
-                    _forkParent: JSON.stringify(document),
-                })));
-                await collection.deleteAll(documents.filter((document) => document.deletedAt));
-                if (documents.length) {
-                    const lastDocument = documents[documents.length - 1];
-                    const newCursor = lastDocument.updatedAt;
-                    const newOffset = await collection.getDocumentOffset(newCursor, lastDocument.id);
-                    await this.db.updateReplicationPullState(collection.name, newOffset, newCursor);
-                    const collectionPullConfig = replicationStatesByCollectionName.get(collection.name);
-                    if (collectionPullConfig && pullResult.hasMoreChanges) {
-                        requireAnotherBatch = true;
-                        collectionPullConfig.cursor = newCursor;
-                        collectionPullConfig.offset = newOffset;
+        try {
+            await this.db.beginTransaction();
+            for (const collection of this.options.collections) {
+                const pullResult = response.collections[collection.name];
+                if (pullResult) {
+                    const documents = pullResult.documents;
+                    await collection.upsertAll(documents
+                        .filter((document) => !document.deletedAt)
+                        .map((document) => ({
+                        ...document,
+                        _forkParent: JSON.stringify(document),
+                    })));
+                    await collection.deleteAll(documents.filter((document) => document.deletedAt));
+                    if (documents.length) {
+                        const lastDocument = documents[documents.length - 1];
+                        const newCursor = lastDocument.updatedAt;
+                        const newOffset = await collection.getDocumentOffset(newCursor, lastDocument.id);
+                        await this.db.updateReplicationPullState(collection.name, newOffset, newCursor);
+                        const collectionPullConfig = replicationStatesByCollectionName.get(collection.name);
+                        if (collectionPullConfig && pullResult.hasMoreChanges) {
+                            requireAnotherBatch = true;
+                            collectionPullConfig.cursor = newCursor;
+                            collectionPullConfig.offset = newOffset;
+                        }
+                        else {
+                            replicationStatesByCollectionName.delete(collection.name);
+                        }
                     }
                     else {
                         replicationStatesByCollectionName.delete(collection.name);
                     }
                 }
-                else {
-                    replicationStatesByCollectionName.delete(collection.name);
-                }
             }
+            await this.db.commitTransaction();
+        }
+        catch (e) {
+            await this.db.rollbackTransaction();
+            throw e;
         }
         return requireAnotherBatch;
     }
@@ -89,29 +97,37 @@ export class ReplicationService {
         const updatesPushStates = [];
         let requireAnotherBatch = false;
         let hasData = false;
-        for (const collection of this.options.collections) {
-            const replicationState = replicationStatesByCollectionName.get(collection.name);
-            if (replicationState) {
-                const documents = await collection.findChanges(replicationState);
-                if (documents && documents.length) {
-                    hasData = true;
-                    requireAnotherBatch = replicationState.limit > 0 && documents.length === replicationState.limit;
-                    changedDocumentByCollectionName.set(collection.name, documents);
-                    const lastDocument = documents[documents.length - 1];
-                    const newCursor = lastDocument.updatedAt;
-                    const newOffset = await collection.getDocumentOffset(newCursor, lastDocument.id);
-                    replicationState.cursor = newCursor;
-                    replicationState.offset = newOffset;
-                    updatesPushStates.push(() => this.db.updateReplicationPushState(collection.name, newOffset, newCursor));
+        try {
+            await this.db.beginTransaction();
+            for (const collection of this.options.collections) {
+                const replicationState = replicationStatesByCollectionName.get(collection.name);
+                if (replicationState) {
+                    const documents = await collection.findChanges(replicationState);
+                    if (documents && documents.length) {
+                        hasData = true;
+                        requireAnotherBatch = replicationState.limit > 0 && documents.length === replicationState.limit;
+                        changedDocumentByCollectionName.set(collection.name, documents);
+                        const lastDocument = documents[documents.length - 1];
+                        const newCursor = lastDocument.updatedAt;
+                        const newOffset = await collection.getDocumentOffset(newCursor, lastDocument.id);
+                        replicationState.cursor = newCursor;
+                        replicationState.offset = newOffset;
+                        updatesPushStates.push(() => this.db.updateReplicationPushState(collection.name, newOffset, newCursor));
+                    }
                 }
             }
+            if (hasData) {
+                await this.options.fetchPush({
+                    collections: Object.fromEntries(changedDocumentByCollectionName.entries()),
+                });
+                // if fetchPush succeed, updatePushStates in DB.
+                await updatesPushStates.reduce((p, fn) => p.then(fn), Promise.resolve(null));
+            }
+            await this.db.commitTransaction();
         }
-        if (hasData) {
-            await this.options.fetchPush({
-                collections: Object.fromEntries(changedDocumentByCollectionName.entries()),
-            });
-            // if fetchPush succeed, updatePushStates in DB.
-            await Promise.all(updatesPushStates.map((fn) => fn()));
+        catch (e) {
+            await this.db.rollbackTransaction();
+            throw e;
         }
         return requireAnotherBatch;
     }
