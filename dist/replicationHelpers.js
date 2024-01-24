@@ -5,7 +5,7 @@ export class ReplicationHelpers {
             name: collectionName,
             batchSize: options.batchSize || 10,
             findChanges: async (state) => {
-                const results = await db.query(`SELECT * FROM "${collectionName}" where "updatedAt">=${state.cursor} order by ("updatedAt", "id") limit ${state.limit} offset ${state.offset};`);
+                const results = await db.query(`SELECT * FROM "${collectionName}" where "updatedAt">=${state.cursor} order by "updatedAt", "id" limit ${state.limit} offset ${state.offset};`);
                 if (results && results.values) {
                     return results?.values;
                 }
