@@ -13,7 +13,7 @@ export class ReplicationHelpers {
                     return [];
             },
             getDocumentOffset: async (updatedAt, id) => {
-                const results = await db.query(`SELECT count(*) FROM "${collectionName}" where "updatedAt"=${updatedAt} and id<='${id}';`);
+                const results = await db.query(`SELECT count(*) as count FROM "${collectionName}" where "updatedAt"=${updatedAt} and id<='${id}';`);
                 if (results && results.values && results.values.length && results.values[0]) {
                     return results?.values[0]?.count || 0;
                 }
