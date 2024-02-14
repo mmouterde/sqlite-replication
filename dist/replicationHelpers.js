@@ -42,7 +42,7 @@ export class ReplicationHelpers {
         };
     }
     static safeValue(value) {
-        if (value === null) {
+        if (value === null || typeof value === 'undefined') {
             return 'NULL';
         }
         else if (value.toISOString) {

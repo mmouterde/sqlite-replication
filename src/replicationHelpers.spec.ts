@@ -88,6 +88,10 @@ describe('replicationHelpers', () => {
         it('should keep null', async () => {
             expect(ReplicationHelpers.safeValue(null)).toEqual('NULL');
         });
+        it('should map undefined to null', async () => {
+            let val;
+            expect(ReplicationHelpers.safeValue(val)).toEqual('NULL');
+        });
         it('should convert boolean to 0/1', async () => {
             expect(ReplicationHelpers.safeValue(true)).toEqual('1');
         });

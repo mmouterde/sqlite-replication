@@ -57,7 +57,7 @@ export class ReplicationHelpers {
     }
 
     static safeValue(value: any) {
-        if (value === null) {
+        if (value === null || typeof value === 'undefined') {
             return 'NULL';
         } else if (value.toISOString) {
             return value.getTime();
