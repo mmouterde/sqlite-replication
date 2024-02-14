@@ -70,6 +70,45 @@ describe('replicationHelpers', () => {
             );
         });
     });
+    describe('upsert', () => {
+        it('should generate SQL from random object', async () => {
+            const resultingSQL = await ReplicationHelpers.getUpsertStatement('users', { id: 123, firstName: 'Andrew' });
+            expect(resultingSQL).toEqual(
+                `INSERT INTO "users" ("id","firstName") values (123,'Andrew')
+            ON CONFLICT DO UPDATE SET "id"=excluded."id","firstName"=excluded."firstName"`,
+            );
+        });
+        it('should generate SQL from random object changing undefined to null', async () => {
+            const resultingSQL = await ReplicationHelpers.getUpsertStatement(
+                'users',
+                {
+                    id: 123,
+                    firstName: 'Andrew',
+                    lastName: undefined,
+                },
+                { ignoreUndefinedProperties: false },
+            );
+            expect(resultingSQL).toEqual(
+                `INSERT INTO "users" ("id","firstName","lastName") values (123,'Andrew',NULL)
+            ON CONFLICT DO UPDATE SET "id"=excluded."id","firstName"=excluded."firstName","lastName"=excluded."lastName"`,
+            );
+        });
+        it('should generate SQL from random object ignored undefined properties', async () => {
+            const resultingSQL = await ReplicationHelpers.getUpsertStatement(
+                'users',
+                {
+                    id: 123,
+                    firstName: 'Andrew',
+                    lastName: undefined,
+                },
+                { ignoreUndefinedProperties: true },
+            );
+            expect(resultingSQL).toEqual(
+                `INSERT INTO "users" ("id","firstName") values (123,'Andrew')
+            ON CONFLICT DO UPDATE SET "id"=excluded."id","firstName"=excluded."firstName"`,
+            );
+        });
+    });
     describe('safeValue', () => {
         it('should wrap strings with single quotes', async () => {
             expect(ReplicationHelpers.safeValue('value')).toEqual(`'value'`);

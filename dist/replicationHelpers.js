@@ -41,6 +41,15 @@ export class ReplicationHelpers {
             },
         };
     }
+    static getUpsertStatement(collectionName, document, option = { ignoreUndefinedProperties: true }) {
+        if (!document)
+            return Promise.resolve();
+        const keys = Object.keys(document).filter((key) => typeof document[key] !== 'undefined' || !option.ignoreUndefinedProperties);
+        const values = keys.map((key) => ReplicationHelpers.safeValue(document[key])).join();
+        const conflictUpdate = keys.map((key) => `"${key}"=excluded."${key}"`).join();
+        return `INSERT INTO "${collectionName}" (${keys.map((key) => `"${key}"`).join()}) values (${values})
+            ON CONFLICT DO UPDATE SET ${conflictUpdate}`;
+    }
     static safeValue(value) {
         if (value === null || typeof value === 'undefined') {
             return 'NULL';

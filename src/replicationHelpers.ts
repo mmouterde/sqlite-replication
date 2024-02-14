@@ -1,6 +1,5 @@
 import { SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { ReplicationCollectionOptions, ReplicationConfig, ReplicationOptions, ReplicationStorage } from './replication';
-
 const EXPECTED_COLUMNS = ['id', '_forkParent', 'updatedAt', 'deletedAt'];
 
 export class ReplicationHelpers {
@@ -54,6 +53,21 @@ export class ReplicationHelpers {
                 );
             },
         };
+    }
+
+    static getUpsertStatement(
+        collectionName: string,
+        document: any,
+        option: { ignoreUndefinedProperties: boolean } = { ignoreUndefinedProperties: true },
+    ) {
+        if (!document) return Promise.resolve();
+        const keys = Object.keys(document).filter(
+            (key) => typeof document[key] !== 'undefined' || !option.ignoreUndefinedProperties,
+        );
+        const values = keys.map((key) => ReplicationHelpers.safeValue(document[key])).join();
+        const conflictUpdate = keys.map((key) => `"${key}"=excluded."${key}"`).join();
+        return `INSERT INTO "${collectionName}" (${keys.map((key) => `"${key}"`).join()}) values (${values})
+            ON CONFLICT DO UPDATE SET ${conflictUpdate}`;
     }
 
     static safeValue(value: any) {
