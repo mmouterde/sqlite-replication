@@ -5,10 +5,6 @@ export declare class ReplicationHelpers {
         batchSize?: number;
         map?: (document: any) => any;
     }): ReplicationCollectionOptions;
-    static getUpsertStatement(collectionName: string, document: any, option?: {
-        ignoreUndefinedProperties: boolean;
-    }): string | Promise<void>;
-    static safeValue(value: any): any;
     static ensureRequiredColumns(db: ReplicationStorage, collections: ReplicationCollectionOptions[]): Promise<void>;
     static ensureFetchPull(config: ReplicationOptions): void;
     static ensureFetchPush(config: ReplicationOptions): void;

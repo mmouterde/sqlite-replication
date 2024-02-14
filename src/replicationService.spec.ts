@@ -6,11 +6,11 @@ import { ReplicationHelpers } from './replicationHelpers';
 describe('replicationService', () => {
     describe('replicationService push', () => {
         async function testReplicationPush(
-            documents,
+            documents: any[],
             replicationPushState = { users: { offset: 0, cursor: 0 } },
             batchSize = 10,
         ) {
-            const stateUpdates = [];
+            const stateUpdates: any[] = [];
             const storage = new ReplicationTestStorage(null, replicationPushState, (collectionName, offset, cursor) => {
                 stateUpdates.push({ collectionName, offset, cursor });
                 return Promise.resolve();
@@ -22,7 +22,7 @@ describe('replicationService', () => {
                     {
                         name: 'users',
                         batchSize,
-                        getDocumentOffset: (cursor, id) =>
+                        getDocumentOffset: (cursor: number, id: string) =>
                             Promise.resolve(
                                 documents.filter((document) => document.updatedAt === cursor && document.id <= id)
                                     .length,
